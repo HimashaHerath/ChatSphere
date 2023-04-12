@@ -10,6 +10,20 @@ app.use(cors({ origin: true }));
 const CHAT_ENGINE_PROJECT_ID = process.env.CHAT_ENGINE_PROJECT_ID;
 const CHAT_ENGINE_PRIVATE_KEY = process.env.CHAT_ENGINE_PRIVATE_KEY;
 
+app.post("/authenticate", async (req, res) => {
+  const { username } = req.body;
+  // Get or create user on Chat Engine!
+  try {
+    const r = await axios.put(
+      "https://api.chatengine.io/users/",
+      { username: username, secret: username, first_name: username },
+      { headers: { "Private-Key": CHAT_ENGINE_PRIVATE_KEY } }
+    );
+    return res.status(r.status).json(r.data);
+  } catch (e) {
+    return res.status(e.response.status).json(e.response.data);
+  }
+});
 
 app.post("/signup", async (req, res) => {
   const { username, secret, email, first_name, last_name } = req.body;
@@ -20,7 +34,7 @@ app.post("/signup", async (req, res) => {
     const r = await axios.post(
       "https://api.chatengine.io/users/",
       { username, secret, email, first_name, last_name },
-      { headers: { "Private-Key": CHAT_ENGINE_PRIVATE_KEY } }
+      { headers: { "Private-Key": CHAT_ENGINE_PROJECT_ID } }
     );
     return res.status(r.status).json(r.data);
   } catch (e) {
@@ -31,21 +45,27 @@ app.post("/signup", async (req, res) => {
 app.post("/login", async (req, res) => {
   const { username, secret } = req.body;
 
-  // Fetch this user from Chat Engine in this project!
-  // Docs at rest.chatengine.io
+  console.log("Request body:", req.body);
+
+  const headers = {
+    "Project-ID": CHAT_ENGINE_PROJECT_ID,
+    "User-Name": username,
+    "User-Secret": secret,
+  };
+
+  console.log("API request headers:", headers);
+
   try {
-    const r = await axios.get("https://api.chatengine.io/users/me/", {
-      headers: {
-        "Project-ID": CHAT_ENGINE_PROJECT_ID,
-        "User-Name": username,
-        "User-Secret": secret,
-      },
-    });
+    const r = await axios.get("https://api.chatengine.io/users/me/", { headers });
+    console.log("API response:", r.data);
     return res.status(r.status).json(r.data);
   } catch (e) {
+    console.log("API error:", e.response.data);
     return res.status(e.response.status).json(e.response.data);
   }
 });
+
+
 
 // vvv On port 3001!
 app.listen(3001);
