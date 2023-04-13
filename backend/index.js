@@ -34,13 +34,19 @@ app.post("/signup", async (req, res) => {
     const r = await axios.post(
       "https://api.chatengine.io/users/",
       { username, secret, email, first_name, last_name },
-      { headers: { "Private-Key": CHAT_ENGINE_PROJECT_ID } }
+      { headers: { "Private-Key": CHAT_ENGINE_PRIVATE_KEY } }
     );
     return res.status(r.status).json(r.data);
   } catch (e) {
-    return res.status(e.response.status).json(e.response.data);
+    if (e.response) {
+      return res.status(e.response.status).json(e.response.data);
+    } else {
+      console.error("Error:", e.message);
+      return res.status(500).json({ detail: "Internal Server Error" });
+    }
   }
 });
+
 
 app.post("/login", async (req, res) => {
   const { username, secret } = req.body;
